@@ -9,7 +9,7 @@ exports.signUp = async (req, res) => {
   const body = req.body;
 
   if (!(body.email && body.password)) {
-    return res.status(400).send({ error: "data not formatted properly" });
+    return res.status(400).json({ error: "data not formatted properly" });
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -24,10 +24,10 @@ exports.signUp = async (req, res) => {
     })
     .then((user) => {
       console.log(" register completed");
-      res.send(user);
+      res.status(200).json({ message: "User Created Successfully", UserDetails: user });
     })
     .catch((err) => {
-      res.send(err.message);
+      res.status(404).json({error: err.message});
     });
 };
 
@@ -35,6 +35,7 @@ exports.signUp = async (req, res) => {
  * Password has been securely stored with bcrypt method
  */
 exports.logIn = async (req, res) => {
+
   const body = req.body;
   var otp = `${Math.floor(1000 + Math.random() * 9000)}`; //otp formula
 
@@ -43,14 +44,16 @@ exports.logIn = async (req, res) => {
     const validPassword = await bcrypt.compare(body.password, user.password);
 
     if (validPassword) {
+
       res.status(200).json({ message: "we have sent a otp via Email" });
-      await User.findOneAndUpdate({ email: user.email }, { otp: otp });
+      await userSchema.findOneAndUpdate({ email: user.email }, { otp: otp });
       sendMail(user.email, otp);
+
     } else {
       res.status(400).json({ error: "Invalid Password" });
     }
   } else {
-    res.json({ error: "User does not exist" });
+    res.status(404).json({error: "email does not exist " });
   }
 };
 
@@ -71,12 +74,9 @@ exports.otpVerify = async (req, res) => {
         algorithm: "HS256",
         expiresIn: "2d",
       });
-      return res.status(200).json({
-        message: "login success",
-        token: "bearer " + token,
-      });
+      return res.status(200).json({message: "login success",token: "bearer " + token});
     } else {
-      res.send("incorrect otp ");
+      res.status(400).json({error:"incorrect otp "});
     }
   });
 };
@@ -98,7 +98,7 @@ exports.updateUser = async (req, res) => {
       .status(200)
       .send({ message: "user details updated", updatedDetails: user });
   } else {
-    res.status(404).send({ message: "user does not exist " });
+    res.status(404).send({ error: "user does not exist " });
   }
 };
 
@@ -109,14 +109,14 @@ exports.deleteUser = async (req, res) => {
     .findByIdAndDelete({ _id: req.params.userid }, { new: true })
     .then((user) => {
       if (!user) {
-        res.status(400).send(req.params.userid + " was not found");
+        res.status(400).json({error:req.params.userid + " was not found"});
       } else {
         console.log("user deleted successfully");
-        res.status(200).send(req.params.userid + " was deleted.");
+        res.status(200).json({message:req.params.userid + " was deleted."});
       }
     })
     .catch((errors) => {
-      res.send(errors.message);
+      res.status(404).json({error:errors.message});
     });
 };
 
@@ -130,13 +130,13 @@ exports.findTask = async (req, res) => {
     .populate("taskDetails")
     .then((user) => {
       if (user) {
-        res.json({ message: "task details here", task: user });
+        res.status(200).json({ message: "task details here", task: user });
         console.log(user);
       } else {
-        res.send("invalid userid");
+        res.status(400).json({error:"invalid userid"});
       }
     })
     .catch((err) => {
-      console.log(err.message);
+      res.status(400).json({error:err.message})
     });
 };

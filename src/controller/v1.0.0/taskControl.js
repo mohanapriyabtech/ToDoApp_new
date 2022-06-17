@@ -17,17 +17,16 @@ exports.taskCreate = async (req, res) => {
     taskSendBy: await userSchema.findOne({ _id: id }, { new: true }),
   })
     .then(async result => {
-      res.json({
-        message: "Task created sucessfully",
-        result,
+      res.status(200).json({ message: "Task created sucessfully",
+        TaskDetails:result,
       });
       
       await userSchema.findOneAndUpdate({_id:id},{$push: { taskDetails: result._id }})
       console.log("Task created");
     })
 
-    .catch((err) => {
-      console.log(err.message);
+    .catch(() => {
+      res.status(404).json({ error: "user ID does not exist"})
     });
 };
 
@@ -39,14 +38,14 @@ exports.taskEdit = async (req, res) => {
     .then((task) => {
       if (task) {
         console.log(" Task edited successfully");
-        res.status(200).send({ message: "Task Edited", task });
+        res.status(200).json({ message: "Task Edited", task });
       } else {
-        res.status(404).send({ message: "invalid id" });
+        res.status(400).json({ error: "invalid id" });
       }
     })
     .catch((error) => {
       console.log(error.message);
-      res.send(error.message);
+      res.status(404).json({error:"Task ID does not Exist",error:error.message});
     });
 };
 
@@ -56,14 +55,14 @@ exports.taskDelete = async (req, res) => {
   await taskSchema.findByIdAndDelete({ _id: req.params.taskid }, { new: true })
     .then((task) => {
       if (!task) {
-        res.status(404).send("Taskid not found");
+        res.status(400).json({error:"invalid taskID"});
       } else {
         console.log("user deleted successfully");
-        res.status(200).send("Task deleted successfully.");
+        res.status(200).json({message:"Task deleted successfully."});
       }
     })
-    .catch((errors) => {
-      res.send(errors.message);
+    .catch((error) => {
+      res.status(404).json({error:error.message});
     });
 };
 
@@ -77,14 +76,14 @@ exports.taskCompleted = async (req, res) => {
     .then((result) => {
       if (result) {
         console.log(" Task Completed successfully");
-        res.status(200).send({ message: "Task Completed", result});
+        res.status(200).json({ message: "Task Completed", result});
       } else {
-        res.send("invalid Id");
+        res.status(400).json({error:"invalid taskID"});
       }
     })
     .catch((error) => {
       console.log(error.message);
-      res.send(error.message);
+      res.status(404).json({error:err.message});
     });
 };
 
@@ -95,14 +94,14 @@ exports.findUser = async (req, res) => {
 
     .then((result) => {
     
-      res.json({
-        message: "user details here",
-      result
+      res.status(200).json({ message: "user details here",
+      UserDetails: result
 
       });
       console.log(result);
     })
     .catch((err) => {
+      res.status(404).json({error:err.message});
       console.log(err.message);
     });
 };
@@ -122,14 +121,14 @@ exports.todayTask = async (req, res) => {
 
     await taskSchema.find({ createdAt: { $gte: dateStart, $lt: dateEnd}})
     .then(task => {
-      res.json({
+      res.status(200).json({
         message:"task details here",
-        task 
+        taskDetails:task 
       })
       console.log(task);
      })
      .catch(err=>{
-       res.send(err.message)
+      res.status(404).json({error:err.message});
      })
   
   } else {
@@ -137,13 +136,13 @@ exports.todayTask = async (req, res) => {
      await taskSchema.find({ createdAt: { $gte: startDate, $lt: endDate }})
     .then(todayTask=>{
 
-      res.json({
+      res.status(200).json({
         message:"task details here",
-        todayTask 
+        TodayTaskDetails:todayTask 
       })
     })
      .catch(err=>{
-       res.send(err.message)
+      res.status(404).json({error:err.message});
      })
     
   }
@@ -159,31 +158,26 @@ exports.taskComment = async (req, res) => {
   await taskSchema.findById({ _id:taskId })
 
     .then(async result => {
-      console.log(result)
-      
+    
       if (result.taskSendBy == userId && result._id == taskId)  {
 
        await Task.findOneAndUpdate( { _id: taskId },{ $set: { comment: req.body.comment } },{new:true})
         .then(comment => {
 
-          res.json({
+          res.status(200).json({
           message: "comment updated sucessfully",
-          comment,
+          Comments:comment,
          });
         })
-      
-      }
+       }
+        else {
+        res.status(400).json({ error: "wrong userid or taskid"})
 
-      else {
-        res.json({
-          message: "wrong userid or taskid",
-        });
-
-      } 
+       } 
     })
 
     .catch((err) => {
-      res.send(err.message);
+      res.status(404).json({error:err.message});
     })
 };
 
@@ -192,14 +186,12 @@ exports.taskComment = async (req, res) => {
 
 exports.mailSend = async (req, res) => {
   
-  
-    
   await taskSchema.find({createdAt: { $gte: startDate, $lt: endDate }}).populate("taskSendBy")
 
      .then((result) => {
     
        if(result.length == 0){ 
-
+          res.status(200).json({message:"Tasks not updated Today"})
           console.log("Tasks not updated today")
         }
 
@@ -219,7 +211,7 @@ exports.mailSend = async (req, res) => {
           console.log(userEmail)
            
         }
-            res.send("EOD Mail sent to All")
+            res.status(200).json({message:"EOD Mail sent to All"})
         });
       
         }
@@ -227,7 +219,7 @@ exports.mailSend = async (req, res) => {
       })
       .catch (error => {
          console.log(error.message);
-         res.send(error.message);
+         res.status(404).json({error:error.message})
        })
 
 };

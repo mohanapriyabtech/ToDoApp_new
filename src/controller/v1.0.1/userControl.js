@@ -12,11 +12,10 @@ exports.signUp = async (req, res) => {
     .create({ email, fullName, userName })
     .then((user) => {
       console.log(" register completed");
-      res.status(200)
-      .json({ message: "User Created Successfully", UserDetails: user });
+      res.status(200).json({ message: "User Created Successfully", UserDetails: user });
     })
-    .catch(() => {
-      res.status(400).json({ message: "User not created" });
+    .catch((err) => {
+      res.status(404).json({ error:err.message});
     });
 };
 
@@ -25,7 +24,7 @@ exports.signUp = async (req, res) => {
  */
 exports.logIn = async (req, res) => {
   const email = req.body.email;
-  var otp = `${Math.floor(1000 + Math.random() * 9000)}`; //otp formula
+  const otp = `${Math.floor(1000 + Math.random() * 9000)}`; //otp formula
 
   await userSchema
     .findOneAndUpdate({ email: req.body.email }, { otp: otp })
@@ -37,12 +36,12 @@ exports.logIn = async (req, res) => {
 
         res.status(200).json({ message: "we have sent a otp via Email" });
       } else {
-        res.status(400).json({ message: "invalid email or otp " });
+        res.status(400).json({ error: "invalid email or otp " });
       }
     })
 
     .catch(() => {
-      res.status(404).json({ message: "email does not exist " });
+      res.status(404).json({ error: "email does not exist " });
     });
 };
 
@@ -62,6 +61,6 @@ exports.updateUser = async (req, res) => {
     res.status(200)
       .json({ message: "user details updated", updatedDetails: user });
   } else {
-    res.status(404).json({ message: "user does not exist " });
+    res.status(404).json({ error: "user does not exist " });
   }
 };

@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect("mongodb://localhost/ToDoapp")
+mongoose.connect("mongodb://localhost/Todo")
   .then(() => {
     console.log("connected to database");
   })
