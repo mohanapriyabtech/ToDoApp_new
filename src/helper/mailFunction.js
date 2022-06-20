@@ -34,7 +34,7 @@ exports.statusMail = async (userEmail, fullName, task, taskStatus) => {
     html: `<p> Dear ${fullName} ,</n>Your Task Topic is <b>${task}</b>.
     </n>Your Task status is<b> ${taskStatus}</b> </p>`,
   };
-  mailTransporter.sendMail(mailOptions, (error, info) => {
+  mailTransporter.statusMail(mailOptions, (error, info) => {
     if (error) {
       return console.log(error);
     }

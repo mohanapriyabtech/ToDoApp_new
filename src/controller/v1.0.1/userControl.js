@@ -15,7 +15,7 @@ exports.signUp = async (req, res) => {
       res.status(200).json({ message: "User Created Successfully", UserDetails: user });
     })
     .catch((err) => {
-      res.status(404).json({ error:err.message});
+      res.status(500).json({ error:err.message});
     });
 };
 
@@ -36,12 +36,12 @@ exports.logIn = async (req, res) => {
 
         res.status(200).json({ message: "we have sent a otp via Email" });
       } else {
-        res.status(400).json({ error: "invalid email or otp " });
+        res.status(400).json({ message: "invalid email or otp " });
       }
     })
 
-    .catch(() => {
-      res.status(404).json({ error: "email does not exist " });
+    .catch((err) => {
+      res.status(500).json({ error:err });
     });
 };
 
@@ -49,18 +49,25 @@ exports.logIn = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const body = req.body;
-  const userid = req.params.userid;
+  const userid = req.params.id;
 
-  const user = await userSchema.findByIdAndUpdate(
+  await userSchema.findByIdAndUpdate(
     { _id: userid },
     { $set: req.body },
     { new: true }
-  );
-  if (user) {
-    console.log("user updated successfully");
-    res.status(200)
-      .json({ message: "user details updated", updatedDetails: user });
-  } else {
-    res.status(404).json({ error: "user does not exist " });
-  }
+  )
+  .then(user => {
+     if (user) {
+       
+     console.log("user updated successfully");
+     res.status(200).json({ message: "user details updated", updatedDetails: user });
+
+     } else {
+
+     res.status(404).json({ message: "user does not exist " });
+     }
+  })
+  .catch(err => {
+    res.status(500).json({ error:err });
+  })
 };

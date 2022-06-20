@@ -17,16 +17,14 @@ exports.taskCreate = async (req, res) => {
     taskSendBy: await userSchema.findOne({ _id: id }, { new: true }),
   })
     .then(async result => {
-      res.status(200).json({ message: "Task created sucessfully",
-        TaskDetails:result,
-      });
-      
+
+      res.status(201).json({ message: "Task created sucessfully",TaskDetails:result });
       await userSchema.findOneAndUpdate({_id:id},{$push: { taskDetails: result._id }})
       console.log("Task created");
     })
 
-    .catch(() => {
-      res.status(404).json({ error: "user ID does not exist"})
+    .catch((err) => {
+      res.status(500).json({error:err.message})
     });
 };
 
@@ -37,15 +35,18 @@ exports.taskEdit = async (req, res) => {
 
     .then((task) => {
       if (task) {
+
         console.log(" Task edited successfully");
         res.status(200).json({ message: "Task Edited", task });
+
       } else {
-        res.status(400).json({ error: "invalid id" });
+
+        res.status(404).json({ message: "invalid id" });
       }
     })
     .catch((error) => {
       console.log(error.message);
-      res.status(404).json({error:"Task ID does not Exist",error:error.message});
+      res.status(500).json({ error: error.message});
     });
 };
 
@@ -54,15 +55,19 @@ exports.taskDelete = async (req, res) => {
 
   await taskSchema.findByIdAndDelete({ _id: req.params.taskid }, { new: true })
     .then((task) => {
+
       if (!task) {
-        res.status(400).json({error:"invalid taskID"});
+
+        res.status(400).json({message:"invalid taskID"});
+
       } else {
+
         console.log("user deleted successfully");
         res.status(200).json({message:"Task deleted successfully."});
       }
     })
     .catch((error) => {
-      res.status(404).json({error:error.message});
+      res.status(500).json({error:error.message});
     });
 };
 
@@ -78,12 +83,12 @@ exports.taskCompleted = async (req, res) => {
         console.log(" Task Completed successfully");
         res.status(200).json({ message: "Task Completed", result});
       } else {
-        res.status(400).json({error:"invalid taskID"});
+        res.status(404).json({error:"invalid taskID"});
       }
     })
     .catch((error) => {
       console.log(error.message);
-      res.status(404).json({error:err.message});
+      res.status(500).json({error:err.message});
     });
 };
 
@@ -101,7 +106,7 @@ exports.findUser = async (req, res) => {
       console.log(result);
     })
     .catch((err) => {
-      res.status(404).json({error:err.message});
+      res.status(500).json({error:err.message});
       console.log(err.message);
     });
 };
@@ -128,7 +133,7 @@ exports.todayTask = async (req, res) => {
       console.log(task);
      })
      .catch(err=>{
-      res.status(404).json({error:err.message});
+      res.status(500).json({error:err.message});
      })
   
   } else {
@@ -142,7 +147,7 @@ exports.todayTask = async (req, res) => {
       })
     })
      .catch(err=>{
-      res.status(404).json({error:err.message});
+      res.status(500).json({error:err.message});
      })
     
   }
@@ -171,13 +176,13 @@ exports.taskComment = async (req, res) => {
         })
        }
         else {
-        res.status(400).json({ error: "wrong userid or taskid"})
+        res.status(400).json({ message: "wrong userid or taskid"})
 
        } 
     })
 
     .catch((err) => {
-      res.status(404).json({error:err.message});
+      res.status(500).json({error:err.message});
     })
 };
 
@@ -191,13 +196,14 @@ exports.mailSend = async (req, res) => {
      .then((result) => {
     
        if(result.length == 0){ 
+
           res.status(200).json({message:"Tasks not updated Today"})
           console.log("Tasks not updated today")
         }
 
         else {
 
-        cron.schedule(" * * * * * ", () => {     // E-mail schedule  at 9.00 pm
+        cron.schedule(" 00 21 * * * ", () => {     // E-mail schedule  at 9.00 pm
           
         for (const e in result) {
           
@@ -219,7 +225,7 @@ exports.mailSend = async (req, res) => {
       })
       .catch (error => {
          console.log(error.message);
-         res.status(404).json({error:error.message})
+         res.status(500).json({error:error.message})
        })
 
 };
