@@ -26,15 +26,15 @@ exports.sendMail = async (email, otp) => {
   });
 };
 
-exports.statusMail = async (userEmail, fullName, task, taskStatus) => {
+exports.statusMail = async (userEmail, fullName, n) => {
   const mailOptions = {
     from: process.env.EMAIL_ID,
     to: userEmail,
     subject: "Task Status Report",
-    html: `<p> Dear ${fullName} ,</n>Your Task Topic is <b>${task}</b>.
-    </n>Your Task status is<b> ${taskStatus}</b> </p>`,
+   
+    html: `<p> Dear ${fullName} ,</n>Your Task Details here<b>${n}</b> </p>`,
   };
-  mailTransporter.statusMail(mailOptions, (error, info) => {
+  mailTransporter.sendMail(mailOptions, function(error, info) {
     if (error) {
       return console.log(error);
     }

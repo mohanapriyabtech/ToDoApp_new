@@ -3,7 +3,9 @@ const userSchema = require("../../model/userSchema");
 const taskSchema = require("../../model/taskSchema");
 const statusMail = require("../../helper/mailFunction").statusMail
 const startDate = require("../../helper/time").startDate
-const endDate = require("../../helper/time").endDate
+const endDate = require("../../helper/time").endDate;
+const _ = require("lodash");
+const { map } = require("lodash");
 
 
 // Task create function with userid
@@ -195,6 +197,7 @@ exports.mailSend = async (req, res) => {
 
      .then((result) => {
     
+
        if(result.length == 0){ 
 
           res.status(200).json({message:"Tasks not updated Today"})
@@ -203,7 +206,7 @@ exports.mailSend = async (req, res) => {
 
         else {
 
-        cron.schedule(" 00 21 * * * ", () => {     // E-mail schedule  at 9.00 pm
+        cron.schedule("*/10 * * * * *", () => {     // E-mail schedule  at 9.00 pm
           
         for (const e in result) {
           
@@ -229,4 +232,115 @@ exports.mailSend = async (req, res) => {
        })
 
 };
+exports.user = async (req, res) => {
+ 
+  // await taskSchema.aggregate( [
+  //    { $lookup: {
+  //         from: "userdetails",
+  //         localField: "taskSendBy",    
+  //         foreignField: "_id",  
+  //         as: "taskList"
+  //      }
+  //   },
+  //   {$unwind : "$taskList"},
+  // ] )
+  await userSchema.aggregate( [
+     { $lookup: {
+          from: "tasks",
+          localField: "taskDetails",    
+          foreignField: "_id",  
+          as: "taskList"
+       }
+    },
+    {$unwind : "$taskList"},
+  ] )
+    
 
+     .then(result => {
+
+       console.log(result[0].taskList)
+         
+      const final = _.reduce(result, (results, user) => {
+      (results[user.email] || (results[user.email] = [])).push(user)
+      return results
+      },{})
+       console.log(final) 
+
+       for(var k in final) {
+         const userEmail = k
+         const array = final[k]
+         console.log(userEmail)
+         var array1 = [] ,array2 = [];
+        
+         for(var d in array) {
+           var task=array[d].task
+           var taskStatus=array[d].status
+           var fullName = array[d].taskList.fullName
+           array1.push(task)   
+           array2.push(taskStatus)
+           
+         }
+         const separator = ", ";
+         var newArray = array1.map((e, i) => 'Task Name :'+ e +separator+ 'Status  :'+ array2[i]);
+         const n ='<li>' + newArray.join('</li><li>') +'</li>';
+         var str = '<ol>'
+         newArray.forEach(function(slide) {
+          str += '<li>'+ slide + '</li>';
+        }); 
+        
+        str += '</ol>';
+        //statusMail(userEmail,fullName,str)
+         console.log(n)
+           
+       }
+        
+        
+     
+  
+        res.send('task sent')
+  //-----------------------------------------------------------------
+      
+//   await userSchema.find({}).populate("taskDetails")
+
+//   .then((result) => {
+
+//  const s = JSON.stringify(result,undefined,2)
+//  console.log(s)
+
+//  const g = result.taskDetails
+
+//  console.log(g)
+ 
+//  for ( const i in result) { 
+//    const email= result[i].email
+//    console.log(email)
+   
+//      for (const r in i) {
+  
+//    const tsk = result[i].taskDetails[r].task
+//    console.log(tsk)
+//    console.log(`i.${r} = ${i[r]}`)
+   
+   
+//      }    
+     
+//    }
+//    var t =  _.flatMap(result ,item => 
+//     _(item.taskDetails)
+//       .filter({createdAt: { $gte: startDate, $lt: endDate }})
+//       .map(v => ({email: item.email, task: v.task}))
+//       .value()
+//   );
+//   res.send('task sent')
+//   const v = JSON.stringify(t,undefined,2)
+
+ 
+      
+      })
+    
+      .catch (error => {
+         console.log(error.message);
+         res.status(500).json({error:error.message})
+       })
+
+};
